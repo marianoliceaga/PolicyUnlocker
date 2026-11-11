@@ -12,6 +12,9 @@
 .PARAMETER Configuration
     Build configuration. Default: Release.
 
+.PARAMETER StoreOnly
+    Rebuild only the MSIX package and leave the other artifacts in place.
+
 .NOTES
     Optional MSIX signing (needed only to sideload the .msix on a PC; Partner Center
     signs Store submissions itself). Set both environment variables:
@@ -26,7 +29,10 @@ param(
     [Parameter(Mandatory)]
     [string]$Version,
 
-    [string]$Configuration = 'Release'
+    [string]$Configuration = 'Release',
+
+    # Rebuild only the Microsoft Store (MSIX) package; keeps the other artifacts in place.
+    [switch]$StoreOnly
 )
 
 $ErrorActionPreference = 'Stop'
@@ -77,7 +83,11 @@ function Find-SdkTool {
 }
 
 # ---------------------------------------------------------------- clean
-if (Test-Path $artifacts) { Remove-Item $artifacts -Recurse -Force }
+if ($StoreOnly) {
+    Remove-Item (Join-Path $artifacts "$name-store.msix") -Force -ErrorAction SilentlyContinue
+} elseif (Test-Path $artifacts) {
+    Remove-Item $artifacts -Recurse -Force
+}
 New-Item -ItemType Directory -Force $artifacts | Out-Null
 
 # ---------------------------------------------------------------- 1. publish
@@ -99,24 +109,26 @@ Invoke-Native 'dotnet' @(
 $exe = Join-Path $publish 'PolicyUnlocker.exe'
 if (-not (Test-Path $exe)) { throw "Publish did not produce $exe." }
 
-# ---------------------------------------------------------------- 2. portable
-Write-Host '==> Building portable zip'
-New-Item -ItemType Directory -Force $portable | Out-Null
-Copy-Item $exe $portable
-Copy-Item (Join-Path $root 'README.md'), (Join-Path $root 'LICENSE') $portable
-$zip = Join-Path $artifacts "$name-portable-$rid.zip"
-Compress-Archive -Path (Join-Path $portable '*') -DestinationPath $zip
+if (-not $StoreOnly) {
+    # ---------------------------------------------------------------- 2. portable
+    Write-Host '==> Building portable zip'
+    New-Item -ItemType Directory -Force $portable | Out-Null
+    Copy-Item $exe $portable
+    Copy-Item (Join-Path $root 'README.md'), (Join-Path $root 'LICENSE') $portable
+    $zip = Join-Path $artifacts "$name-portable-$rid.zip"
+    Compress-Archive -Path (Join-Path $portable '*') -DestinationPath $zip
 
-# ---------------------------------------------------------------- 3. installer
-Write-Host '==> Building Inno Setup installer'
-$iscc = Find-Iscc
-Invoke-Native $iscc @(
-    "/DAppVersion=$Version",
-    "/DSourceDir=$publish",
-    "/DOutputDir=$artifacts",
-    "/DRepoRoot=$root",
-    (Join-Path $root 'installer\PolicyUnlocker.iss')
-)
+    # ---------------------------------------------------------------- 3. installer
+    Write-Host '==> Building Inno Setup installer'
+    $iscc = Find-Iscc
+    Invoke-Native $iscc @(
+        "/DAppVersion=$Version",
+        "/DSourceDir=$publish",
+        "/DOutputDir=$artifacts",
+        "/DRepoRoot=$root",
+        (Join-Path $root 'installer\PolicyUnlocker.iss')
+    )
+}
 
 # ---------------------------------------------------------------- 4. MSIX (Store)
 Write-Host '==> Building MSIX package for Microsoft Store'
@@ -152,7 +164,7 @@ else {
 }
 
 # ---------------------------------------------------------------- 5. cleanup + checksums
-Remove-Item $publish, $portable, $staging -Recurse -Force
+Remove-Item $publish, $portable, $staging -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host '==> Writing SHA256SUMS.txt'
 $sums = Get-ChildItem $artifacts -File | ForEach-Object {

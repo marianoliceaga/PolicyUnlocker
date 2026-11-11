@@ -11,8 +11,8 @@
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
          IgnorableNamespaces="uap rescap">
 
-  <Identity Name="MarianoLiceaga.PolicyUnlocker"
-            Publisher="CN=PLACEHOLDER-SET-FROM-PARTNER-CENTER"
+  <Identity Name="2036Mendoza.PolicyUnlocker"
+            Publisher="CN=CEBE635E-D12C-469E-86DC-97E11F901971"
             Version="1.0.0.0"
             ProcessorArchitecture="x64" />
 
@@ -20,7 +20,7 @@
 
   <Properties>
     <DisplayName>PolicyUnlocker</DisplayName>
-    <PublisherDisplayName>Mariano Liceaga</PublisherDisplayName>
+    <PublisherDisplayName>Mendoza</PublisherDisplayName>
     <Logo>Images\StoreLogo.png</Logo>
     <Description>Inspect and remove registry-based Group Policy settings on Windows.</Description>
   </Properties>
