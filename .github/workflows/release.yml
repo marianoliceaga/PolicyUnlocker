@@ -1,0 +1,68 @@
+name: Release
+
+# Build the portable zip, the Inno Setup installer and the Microsoft Store (MSIX) package.
+# - Push a tag like v1.1.0 to build and publish a GitHub Release.
+# - Or run the workflow manually (Actions > Release > Run workflow) to build artifacts only.
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build, x.y.z (ignored when started from a tag)'
+        required: true
+        default: '1.1.0'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install Inno Setup 6
+        shell: pwsh
+        run: winget install --id JRSoftware.InnoSetup --exact --silent --accept-package-agreements --accept-source-agreements
+
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          $v = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { $env:INPUT_VERSION }
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Build release artifacts
+        shell: pwsh
+        env:
+          MSIX_PFX_BASE64: ${{ secrets.MSIX_PFX_BASE64 }}
+          MSIX_PFX_PASSWORD: ${{ secrets.MSIX_PFX_PASSWORD }}
+        run: ./scripts/release.ps1 -Version "${{ steps.version.outputs.version }}"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: PolicyUnlocker-${{ steps.version.outputs.version }}
+          path: artifacts/*
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $files = Get-ChildItem artifacts -File | ForEach-Object { $_.FullName }
+          gh release create "v$env:VERSION" $files --title "PolicyUnlocker $env:VERSION" --generate-notes

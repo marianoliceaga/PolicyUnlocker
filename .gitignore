@@ -1,0 +1,12 @@
+## Build output
+bin/
+obj/
+artifacts/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+
+## Local secrets
+*.pfx

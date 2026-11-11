@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MSIX manifest for the Microsoft Store package.
+  IMPORTANT: Identity Name and Publisher must match the values shown in Partner Center
+  (Product identity). The values below are placeholders for local testing only.
+  Version is rewritten automatically by scripts/release.ps1 (format: major.minor.build.revision).
+-->
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+         xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+         xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+         IgnorableNamespaces="uap rescap">
+
+  <Identity Name="MarianoLiceaga.PolicyUnlocker"
+            Publisher="CN=PLACEHOLDER-SET-FROM-PARTNER-CENTER"
+            Version="1.0.0.0"
+            ProcessorArchitecture="x64" />
+
+  <mp:PhoneIdentity PhoneProductId="00000000-0000-0000-0000-000000000000" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+
+  <Properties>
+    <DisplayName>PolicyUnlocker</DisplayName>
+    <PublisherDisplayName>Mariano Liceaga</PublisherDisplayName>
+    <Logo>Images\StoreLogo.png</Logo>
+    <Description>Inspect and remove registry-based Group Policy settings on Windows.</Description>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="es-ar" />
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="PolicyUnlocker"
+                 Executable="PolicyUnlocker.exe"
+                 EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements DisplayName="PolicyUnlocker"
+                          Description="Inspect and remove registry-based Group Policy settings."
+                          BackgroundColor="transparent"
+                          Square150x150Logo="Images\Square150x150Logo.png"
+                          Square44x44Logo="Images\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>
